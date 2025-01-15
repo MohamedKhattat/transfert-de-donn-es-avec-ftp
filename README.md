@@ -1,5 +1,5 @@
 # SimpleFTP-Client
-C# WPF FTP Client Implementation - Portfolio Project
+C# WPF FTP Client Implementation 
 
 The requirements for this project were simple. Build a WPF application that utilizes FTP to:
 + Upload a file
