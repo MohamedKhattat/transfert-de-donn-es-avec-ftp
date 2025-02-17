@@ -14,43 +14,53 @@ namespace SimpleFTP
         public List<FileObject> lines = new List<FileObject>();
 
         public bool ConnectToFTP(ConnectionProfile connProfile)
-        {
-            FtpWebRequest request = (FtpWebRequest)WebRequest.Create(connProfile.ConnUri);
-            request.Method = WebRequestMethods.Ftp.ListDirectoryDetails;
-            request.Credentials = new NetworkCredential(connProfile.ConnUser, connProfile.ConnPass);
-            request.KeepAlive = connProfile.ConnKeepAlive;
-            request.UseBinary = connProfile.ConnBinary;
-            request.UsePassive = connProfile.ConnPassiveMode;
+{
+    FtpWebRequest request = (FtpWebRequest)WebRequest.Create(connProfile.ConnUri);
+    request.Method = WebRequestMethods.Ftp.ListDirectoryDetails;
+    request.Credentials = new NetworkCredential(connProfile.ConnUser, connProfile.ConnPass);
+    request.KeepAlive = connProfile.ConnKeepAlive;
+    request.UseBinary = connProfile.ConnBinary;
+    request.UsePassive = connProfile.ConnPassiveMode;
 
-            FtpWebResponse response;
-            Stream responseStream;
-            String serverRsp = "";
-            lines.Clear();
-            try
-            {
-                response = (FtpWebResponse)request.GetResponse();
-                responseStream = response.GetResponseStream();
-                StreamReader reader = new StreamReader(responseStream);
-               
-                string line = "";
-                while((line = reader.ReadLine()) != null)
-                {
-                    Console.WriteLine(line);
-                    serverRsp += line;
-                    
-                    lines.Add(ParseResponseObjects(line));
-                }
-                connResponse += "Downloading file list...";               
-                reader.Close();
-                response.Close();
-                return true;
-            }
-            catch (WebException ex)
-            {
-                connResponse += ex.Message;
-                return false;
-            }
+    FtpWebResponse response;
+    Stream responseStream;
+    String serverRsp = "";
+    lines.Clear();
+
+    try
+    {
+        response = (FtpWebResponse)request.GetResponse();
+        responseStream = response.GetResponseStream();
+        StreamReader reader = new StreamReader(responseStream);
+       
+        string line = "";
+        while((line = reader.ReadLine()) != null)
+        {
+            Console.WriteLine($"Server Response Line: {line}"); // Debug each line
+            serverRsp += line;
+            lines.Add(ParseResponseObjects(line));
         }
+
+        Console.WriteLine("Complete Directory Listing:");
+        foreach (var fileLine in lines)
+        {
+            Console.WriteLine(fileLine); // View parsed objects
+        }
+
+        System.Diagnostics.Debug.WriteLine("Debug: Directory listing fetched successfully."); 
+
+        connResponse += "Downloading file list...";               
+        reader.Close();
+        response.Close();
+        return true;
+    }
+    catch (WebException ex)
+    {
+        connResponse += ex.Message;
+        return false;
+    }
+}
+
 
         // Parses http stream response into a FileObject
         public FileObject ParseResponseObjects(string line)
@@ -67,6 +77,7 @@ namespace SimpleFTP
             client.DownloadFile(connProfile.ConnUri + fileName, localPath);
             
         }
+
 
         public static string FtpUpload(string uri, string userName, string password, string filePath)
         {
@@ -102,7 +113,7 @@ namespace SimpleFTP
         }
 
         public static string FtpDownload(string uri, string userName, string password, string filePath, string localDest, string fileSize)
-        {      
+        {
             try
             {
                 FtpWebRequest ftpRequest = (FtpWebRequest)FtpWebRequest.Create(uri + "/" + filePath);
@@ -133,8 +144,8 @@ namespace SimpleFTP
                         localFileStream.Write(byteBuffer, 0, bytesRead);
                         bytesRead = ftpStream.Read(byteBuffer, 0, 1024);
                         totalBytesRead += bytesRead;
-                        double progress = (byteBuffer.Length - bytesRead);                   
-                        MainWindow.mainWindow.AppendConsole(string.Format("Progress: {0} % ", Math.Round((totalBytesRead * 100) / Double.Parse(fileSize), 2)));                       
+                        double progress = (byteBuffer.Length - bytesRead);
+                        MainWindow.mainWindow.AppendConsole(string.Format("Progress: {0} % ", Math.Round((totalBytesRead * 100) / Double.Parse(fileSize), 2)));
                     }
                 }
                 catch (Exception ex) { Console.WriteLine(ex.ToString()); }
